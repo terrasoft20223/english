@@ -1,12 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Init</title>
+    <style>
+        .ffont {
+            font-size: 0.9em;
+        }
+        html, body {
+            color: white;
+            background-color: black;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <title>English File Sounds</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
+<div id="audio">
+    <audio preload="none" controls="controls" style="width:100%;">
+        <source id="source" type="audio/mpeg" src="ef3e_beg_05a_2-28.mp3" />
+    </audio>
+    <div id="title"></div>
+</div>
+<br/>
 
-Hello
+Search: <input class="ffont" id="search" type="text" />
+<br/><br/>
+<div id="div" class="ffont"></div>
 
 </body>
+<script>
+
+    var arr = [];
+    var div = $("#div");
+    var search = $("#search");
+    var divTitle = $("#title");
+    var divAudio = $("#audio");
+    var divText = $("#text");
+    var source = $("#source");
+    search.focus();
+    initArr();
+
+    function clickOnLink(indexArr) {
+        var title = arr[indexArr][0];
+        var url = arr[indexArr][1];
+        var mp3 = arr[indexArr][2];
+        var text = arr[indexArr][3];
+
+        source.attr('src', mp3);
+        divAudio.html('<div id="title">' + '<b><button id="butleft"><<<<<</button>&nbsp;&nbsp;<button id="butright">>>>>></button>&nbsp;&nbsp;<a target="_blank" href="' + url + '">' + title + '</a></b>' + '</div>' +
+            '<audio preload="none" controls="controls" style="width:100%;">\n' +
+            '            <source id="source" type="audio/mpeg" src="' + mp3 + '" />\n' +
+            '        </audio><div id="text"><b>' + text.replaceAll('\n', '<br/>') + '</b></div>');
+        setEventsOnButtons();
+        window.scrollTo(0, 0);
+    }
+
+    function setEventsOnButtons() {
+        $("#butleft").on("click", function(event){
+            for(var i in arr) {
+                if (arr[i][2] != undefined && arr[i][2] == source.attr('src') && i > 0) {
+                    source.attr('src', --i);
+                    clickOnLink(i);
+                    break;
+                }
+            }
+        });
+        $("#butright").on("click", function(event){
+            for(var i in arr) {
+                if (arr[i][2] != undefined  &&  arr[i][2] == source.attr('src')  &&  i < arr.length - 1) {
+                    source.attr('src', ++i);
+                    clickOnLink(i);
+                    break;
+                }
+            }
+        });
+    }
+
+    function showItems(_this) {
+        for (var i = 0; i < arr.length; i++) {
+           if (arr[i][0].toLowerCase().includes($(_this).val().toLowerCase())) {
+                var a = '<div target="_blank" onclick="clickOnLink(' + i + ');" href="' + arr[i][1] + '">' + arr[i][0] + '</div><br/>';
+                div.append(a);
+            }
+        }
+    }
+    
+    function loadXml(successFunc) {
+        $.ajax({
+            type: "GET",
+            url: "data.xml",
+            dataType: "text",
+            success: function(xml) {
+                successFunc(xml)
+            }
+        });
+    }
+    
+    function initLinks() {
+        search.on( "keyup", function(event) {
+            if (event.keyCode == 27) {
+                $(this).val("");
+            } else {
+                div.text("");
+                console.log(event.keyCode);
+                showItems(this);
+            }
+        });
+
+        for (var i = 0; i < arr.length; i++) {
+            var a = '<div target="_blank" onclick="clickOnLink(' + i + ');" href="' + arr[i][1] + '">' + arr[i][0] + '</div><br/>';
+            div.append(a);
+        }
+    }
+
+    function parseXmlData(data) {
+        var msg = jQuery.parseXML(data);
+        var rootNode = msg.getElementsByTagName('root')[0];
+        var itemNodes = rootNode.getElementsByTagName("item");
+        var name, file, text;
+        if (itemNodes)
+        for(var i=0; i < itemNodes.length; i++) {
+            name = itemNodes[i].getElementsByTagName("name")[0].childNodes[0].nodeValue;
+            file = itemNodes[i].getElementsByTagName("file")[0].childNodes[0].nodeValue;
+            text = itemNodes[i].getElementsByTagName("text")[0].childNodes[0].nodeValue;
+            arr.push([name, "", file, text])
+        }
+        initLinks();
+    }
+
+    function initArr() {
+        loadXml(parseXmlData);
+    }
+</script>
 </html>
